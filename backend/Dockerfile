@@ -1,0 +1,64 @@
+# ============================================================
+# Nexfolio - Multi-stage Dockerfile (Laravel API + React SPA)
+# Build context: repository root.
+# Railway: Dockerfile Path = backend/Dockerfile, root = repo.
+# ============================================================
+
+# ---------- Stage 1: build the React frontend ----------
+FROM node:20-alpine AS frontend
+WORKDIR /app/frontend
+COPY frontend/package*.json ./
+RUN npm install
+COPY frontend/ ./
+RUN npm run build
+
+# ---------- Stage 2: Laravel backend ----------
+FROM php:8.3-apache AS backend
+
+# System deps + PHP extensions
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libpng-dev \
+        libzip-dev \
+        unzip \
+        git \
+        curl \
+    && docker-php-ext-install \
+        pdo \
+        pdo_mysql \
+        mbstring \
+        gd \
+        intl \
+        bcmath \
+        zip \
+        xml \
+        curl \
+    && a2enmod rewrite \
+    && rm -rf /var/lib/apt/lists/*
+
+# Composer binary
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www/html
+
+# Install PHP dependencies
+COPY backend/composer.json backend/composer.lock ./
+RUN composer install --no-dev --optimize-autoloader --no-scripts
+
+# Application code
+COPY backend/ ./
+
+# Built SPA -> public/
+COPY --from=frontend /app/frontend/dist ./public/
+
+# Apache vhost (DocumentRoot = public, AllowOverride, index.php first)
+COPY backend/deploy/apache.conf /etc/apache2/sites-available/nexfolio.conf
+RUN a2dissite 000-default.conf || true \
+    && a2ensite nexfolio.conf
+
+# Permissions
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
+EXPOSE 80
+
+CMD ["sh", "-c", "php artisan storage:link || true; php artisan migrate --force || true; apache2-foreground"]

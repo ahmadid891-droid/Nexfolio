@@ -1,0 +1,33 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets / env
+.env
+.env.backup
+.env.production
+.env.local
+
+# Google OAuth client secret (never commit)
+Nexfolio.apps.googleusercontent.Json.com
+*.json.com
+*.Json.com
+
+# PHP
+/vendor
+*.log
+
+# Frontend build artifacts
+/frontend/node_modules
+/frontend/dist
+/frontend/.vite
+
+# IDE / editors
+/.idea
+/.vscode
+/.zed
+/.fleet
+
+# Misc
+/storage/pail
+.phpunit.result.cache

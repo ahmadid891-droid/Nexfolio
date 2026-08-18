@@ -1,0 +1,37 @@
+# ============================================================
+# Nexfolio - .htaccess ROOT (public_html/namaproyek/.htaccess)
+# Letakkan file ini di ROOT proyek (folder yang berisi 'public').
+# ============================================================
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # --- 1. Arahkan semua request ke folder public/ ---
+    RewriteRule ^(.*)$ public/$1 [L]
+
+    # --- 2. Blokir akses langsung ke file sensitif ---
+    RewriteRule ^\.env$ - [F,L]
+    RewriteRule ^(?:\.git|vendor|storage|bootstrap|cache)/ - [F,L,NC]
+</IfModule>
+
+# --- 3. Cegah index direktori ---
+Options -Indexes
+
+# --- 4. Force HTTPS (aktifkan setelah SSL/Let's Encrypt aktif) ---
+# <IfModule mod_rewrite.c>
+#     RewriteEngine On
+#     RewriteCond %{HTTPS} off
+#     RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# </IfModule>
+
+# --- 5. Header keamanan tambahan (bila server tak punya) ---
+# <IfModule mod_headers.c>
+#     Header always set X-Content-Type-Options "nosniff"
+#     Header always set X-Frame-Options "SAMEORIGIN"
+#     Header always set Referrer-Policy "strict-origin-when-cross-origin"
+# </IfModule>
+
+# --- 6. Laravel public/.htaccess (bawaan, jangan dihapus) ---
+# public/.htaccess berisi rule rewrite front controller Laravel (bawaan).
+# Tambahkan baris berikut di public/.htaccess bila routing butuh base path:
+#   RewriteBase /namaproyek/public
