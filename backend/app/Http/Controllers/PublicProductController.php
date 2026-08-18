@@ -60,9 +60,7 @@ class PublicProductController extends Controller
             'price_formatted' => $product->price_formatted,
             'is_paid' => $product->price_idr > 0,
             'demo_url' => $product->demo_url,
-            'cover_url' => $product->cover_image
-                ? url('storage/'.$product->cover_image)
-                : null,
+            'cover_url' => $product->coverUrl(),
             'category' => $product->category ? [
                 'id' => $product->category->id,
                 'name' => $product->category->name,

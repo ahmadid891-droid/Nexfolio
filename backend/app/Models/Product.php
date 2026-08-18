@@ -20,6 +20,7 @@ class Product extends Model
         'price_idr',
         'demo_url',
         'cover_image',
+        'cover_drive_file_id',
         'drive_file_id',
         'drive_folder_id',
         'storage_provider',
@@ -65,5 +66,18 @@ class Product extends Model
     public function getPriceFormattedAttribute(): string
     {
         return 'Rp'.number_format($this->price_idr, 0, ',', '.');
+    }
+
+    public function coverUrl(): ?string
+    {
+        if ($this->cover_drive_file_id) {
+            return 'https://drive.google.com/thumbnail?id='.$this->cover_drive_file_id.'&sz=w1600';
+        }
+
+        if ($this->cover_image) {
+            return url('storage/'.$this->cover_image);
+        }
+
+        return null;
     }
 }

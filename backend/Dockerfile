@@ -42,10 +42,13 @@ WORKDIR /var/www/html
 
 # Install PHP dependencies
 COPY backend/composer.json backend/composer.lock ./
-RUN composer install --no-dev --optimize-autoloader --no-scripts
+RUN composer install --no-dev --optimize-autoloader
 
 # Application code
 COPY backend/ ./
+
+# Register package service providers (Sanctum, Socialite, ...)
+RUN php artisan package:discover --ansi || true
 
 # Built SPA -> public/
 COPY --from=frontend /app/frontend/dist ./public/

@@ -169,6 +169,42 @@ class GoogleDriveService
         return $this->uploadIntoFolder($this->ensureFolder(), $filePath, $fileName);
     }
 
+    public function uploadCover(string $filePath, string $fileName): string
+    {
+        $folderId = $this->ensureFolder();
+
+        $file = new DriveFile([
+            'name' => $fileName,
+            'parents' => [$folderId],
+        ]);
+
+        $response = $this->drive()->files->create($file, [
+            'data' => file_get_contents($filePath),
+            'mimeType' => mime_content_type($filePath) ?: 'application/octet-stream',
+            'uploadType' => 'multipart',
+            'fields' => 'id',
+        ]);
+
+        $fileId = (string) $response->getId();
+        $this->makePublic($fileId);
+
+        return $fileId;
+    }
+
+    public function makePublic(string $fileId): void
+    {
+        $permission = new Permission([
+            'type' => 'anyone',
+            'role' => 'reader',
+        ]);
+
+        try {
+            $this->drive()->permissions->create($fileId, $permission, ['fields' => 'id']);
+        } catch (\Throwable $e) {
+            Log::warning("GoogleDrive makePublic gagal untuk {$fileId}: ".$e->getMessage());
+        }
+    }
+
     public function uploadIntoFolder(string $folderId, string $filePath, string $fileName): array
     {
         $file = new DriveFile([

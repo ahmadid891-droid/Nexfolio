@@ -46,9 +46,7 @@ class ProductController extends Controller
             'price_formatted' => $product->price_formatted,
             'demo_url' => $product->demo_url,
             'cover_image' => $product->cover_image,
-            'cover_url' => $product->cover_image
-                ? url('storage/'.$product->cover_image)
-                : null,
+            'cover_url' => $product->coverUrl(),
             'drive_file_id' => $product->drive_file_id,
             'drive_folder_id' => $product->drive_folder_id,
             'storage_provider' => $product->storage_provider ?? 'google_drive',
@@ -93,7 +91,9 @@ class ProductController extends Controller
         $product->is_active = $request->boolean('is_active', true);
 
         if ($request->hasFile('cover')) {
-            $product->cover_image = $this->storeCover($request->file('cover'));
+            foreach ($this->storeCover($request->file('cover')) as $key => $value) {
+                $product->$key = $value;
+            }
         }
 
         $files = [];
@@ -161,10 +161,8 @@ class ProductController extends Controller
         }
 
         if ($request->hasFile('cover')) {
-            if ($product->cover_image) {
-                Storage::disk('public')->delete($product->cover_image);
-            }
-            $data['cover_image'] = $this->storeCover($request->file('cover'));
+            $this->deleteCover($product);
+            $data = array_merge($data, $this->storeCover($request->file('cover')));
         }
 
         if ($provider === 'google_drive') {
@@ -210,9 +208,7 @@ class ProductController extends Controller
     {
         $product = Product::query()->findOrFail($id);
 
-        if ($product->cover_image) {
-            Storage::disk('public')->delete($product->cover_image);
-        }
+        $this->deleteCover($product);
 
         AdminAudit::log('product.delete', $product, ['title' => $product->title]);
 
@@ -338,9 +334,32 @@ class ProductController extends Controller
         return $request->validate($rules);
     }
 
-    protected function storeCover(UploadedFile $file): string
+    protected function storeCover(UploadedFile $file): array
     {
-        return $file->store('covers', 'public');
+        // Simpan cover ke Google Drive bila terhubung (awet saat redeploy hosting
+        // ephemeral), dengan fallback ke disk lokal agar produk tetap bisa dibuat.
+        if ($this->drive->isConfigured()) {
+            try {
+                $fileId = $this->drive->uploadCover($file->getRealPath(), $file->getClientOriginalName());
+
+                return ['cover_drive_file_id' => $fileId];
+            } catch (\Throwable $e) {
+                Log::warning('Upload cover ke Google Drive gagal, fallback ke penyimpanan lokal: '.$e->getMessage());
+            }
+        }
+
+        return ['cover_image' => $file->store('covers', 'public')];
+    }
+
+    protected function deleteCover(Product $product): void
+    {
+        if ($product->cover_drive_file_id) {
+            $this->drive->trashFile($product->cover_drive_file_id);
+        }
+
+        if ($product->cover_image) {
+            Storage::disk('public')->delete($product->cover_image);
+        }
     }
 
     protected function folderName(string $title): string

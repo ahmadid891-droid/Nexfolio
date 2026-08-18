@@ -31,9 +31,7 @@ class ProfileController extends Controller
                     'id' => $order->product?->id,
                     'title' => $order->product?->title,
                     'slug' => $order->product?->slug,
-                    'cover_url' => $order->product?->cover_image
-                        ? url('storage/'.$order->product->cover_image)
-                        : null,
+                    'cover_url' => $order->product?->coverUrl(),
                 ],
                 'drive_link' => $order->fulfillment->firstWhere('status', 'delivered')?->drive_link,
                 'fulfilled' => $order->fulfillment()->where('status', 'delivered')->exists(),
