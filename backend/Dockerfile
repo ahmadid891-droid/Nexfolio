@@ -74,4 +74,4 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 
 EXPOSE 80
 
-CMD ["sh", "-c", "a2dismod mpm_event mpm_worker || true; rm -f /etc/apache2/mods-enabled/mpm_event.* /etc/apache2/mods-enabled/mpm_worker.* || true; a2enmod mpm_prefork || true; php artisan package:discover --ansi || true; php artisan storage:link || true; php artisan migrate --force || true; exec apache2-foreground"]
+CMD ["sh", "-c", "echo '=== SITES-ENABLED ==='; ls -la /etc/apache2/sites-enabled; echo '=== NEXFOLIO CONF ==='; cat /etc/apache2/sites-enabled/nexfolio.conf 2>/dev/null; echo '=== apache2ctl -S ==='; apache2ctl -S; a2dismod mpm_event mpm_worker || true; rm -f /etc/apache2/mods-enabled/mpm_event.* /etc/apache2/mods-enabled/mpm_worker.* || true; a2enmod mpm_prefork || true; php artisan package:discover --ansi || true; php artisan storage:link || true; php artisan migrate --force || true; exec apache2-foreground"]
