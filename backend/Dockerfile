@@ -64,8 +64,9 @@ COPY --from=frontend /app/frontend/dist ./public/
 
 # Apache vhost (DocumentRoot = public, AllowOverride, index.php first)
 COPY backend/deploy/apache.conf /etc/apache2/sites-available/nexfolio.conf
-RUN a2dissite 000-default.conf || true; \
-    a2ensite nexfolio.conf
+RUN rm -f /etc/apache2/sites-enabled/000-default.conf; \
+    a2ensite nexfolio.conf; \
+    apache2ctl -t
 
 # Permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
