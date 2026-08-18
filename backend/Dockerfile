@@ -43,9 +43,13 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
+ENV COMPOSER_ALLOW_SUPERUSER=1
+
 # Install PHP dependencies
+# --no-scripts: avoid post-autoload-dump (php artisan package:discover) running
+# before the application code is copied into the image.
 COPY backend/composer.json backend/composer.lock ./
-RUN composer install --no-dev --optimize-autoloader
+RUN php -d memory_limit=-1 /usr/bin/composer install --no-dev --no-scripts --optimize-autoloader
 
 # Application code
 COPY backend/ ./
