@@ -19,11 +19,14 @@ FROM php:8.3-apache AS backend
 RUN apt-get update && apt-get install -y --no-install-recommends \
         libpng-dev \
         libzip-dev \
+        libicu-dev \
+        libxml2-dev \
+        libcurl4-openssl-dev \
+        libonig-dev \
         unzip \
         git \
         curl \
     && docker-php-ext-install \
-        pdo \
         pdo_mysql \
         mbstring \
         gd \
